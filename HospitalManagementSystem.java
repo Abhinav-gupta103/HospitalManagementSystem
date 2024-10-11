@@ -1,5 +1,12 @@
 package HospitalManagementSystem;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,10 +21,45 @@ public class HospitalManagementSystem {
     public void addDoctor(Doctor doctor) {
         doctors.add(doctor);
         doctorAppointments.put(doctor, new ArrayList<>());
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("doctor.ser"))) {
+            out.writeObject(doctors);
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error during serialization: " + e.getMessage());
+        }
     }
 
     public void addPatient(Patient patient) {
         patients.add(patient);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("patient.ser"))) {
+            out.writeObject(patients);
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error during serialization: " + e.getMessage());
+        }
+    }
+
+    public void setSerializedDoctors() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("doctor.ser"))) {
+            System.out.println(in.readObject());
+            doctors = (List<Doctor>) in.readObject();
+        } catch (FileNotFoundException e) {
+            System.err.println("File Not Found: " + e.getMessage());
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error during deserialization: " + e.getMessage());
+        }
+    }
+
+    public void setSerializedPatients() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("patient.ser"))) {
+            patients = (List<Patient>) in.readObject();
+        } catch (FileNotFoundException e) {
+            System.err.println("File Not Found: " + e.getMessage());
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error during deserialization: " + e.getMessage());
+        }
     }
 
     public boolean bookAppointment(int doctorId, int patientId, LocalTime time) {
@@ -26,6 +68,7 @@ public class HospitalManagementSystem {
 
         if (doctor == null || patient == null) {
             System.out.println("Doctor or Patient not Found");
+            return false;
         }
         if (isTimeSlotAvailable(doctor, time)) {
             Appointment appointment = new Appointment(doctor, patient, time);
